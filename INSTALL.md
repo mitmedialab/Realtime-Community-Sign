@@ -46,7 +46,7 @@ These instructions are taken from the TomatoUSB website (<http://tomatousb.org/t
 	- `ipkg install python26`
 	- `ipkg install py26-serial`
 	- `ipkg install py26-setuptools`
-	- `ipkg install git`
+	- `ipkg install svn`
 11. Run the following commands to enable some required kernel modules:
 	- `insmod usbserial`
 	- `insmod ftdi_sio`
