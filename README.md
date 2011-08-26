@@ -12,16 +12,16 @@ Read the INSTALL.md for detailed setup instructions.
 BOM (Bill of Materials)
 --------
 
-Total cost around $300
+**Total cost $300**
 
 - $200 for two one-line LED Signs from [SignsDirect](http://www.signsdirect.com/Home/LED-Signs-Programmable/7x80-LED-Indoor-Brightness-Sign-Red)
     - or $340 for [semi-outdoor brightness](http://www.signsdirect.com/Home/LED-Signs-Programmable/Red-Programable-Ultra-Bright-LED-Message-Sign)
 
-- $70 Router (Netgear WNR3500L)(http://www.google.com/products/catalog?q=netgear+wnr3500l&um=1&ie=UTF-8&tbm=shop&cid=9147418170759086567&sa=X&ei=yewETo6rGcytgQfW8dHbDQ&ved=0CDAQ8wIwAg)
+- $70 Router (Netgear WNR3500L) from [various sources] <http://www.google.com/products/catalog?q=netgear+wnr3500l&um=1&ie=UTF-8&tbm=shop&cid=9147418170759086567&sa=X&ei=yewETo6rGcytgQfW8dHbDQ&ved=0CDAQ8wIwAg>
 
-- $2.70 [USB Hub (3 ports)](http://www.monoprice.com/products/product.asp?c_id=103&cp_id=10307&cs_id=1030702&p_id=6631&seq=1&format=3#specification)
+- $2.70 USB Hub (3 ports) from [monoprice](http://www.monoprice.com/products/product.asp?c_id=103&cp_id=10307&cs_id=1030702&p_id=6631&seq=1&format=3#specification)
 
-- $5 [USB Stick (1GB)](http://www.microcenter.com/single_product_results.phtml?product_id=0250132)
+- $5 USB Stick (1GB) from anywhere like [microcenter](http://www.microcenter.com/single_product_results.phtml?product_id=0250132)
  
 - $8 Project Box from [Mouser](http://www.mouser.com:80/Search/ProductDetail.aspx?R=1591XXFSBKvirtualkey54600000virtualkey546-1591XXFSBK)
     - made by [hammond](http://www.hammondmfg.com/dwg2XXS.htm)
