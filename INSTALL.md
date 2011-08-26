@@ -44,10 +44,12 @@ These instructions are taken from the TomatoUSB website (<http://tomatousb.org/t
 	- `chmod +x /tmp/optware-install.sh`
 	- `sh /tmp/optware-install.sh`
 10. Run the following commands to install required libraries:
-	- `ipkg install python26`
-	- `ipkg install py26-serial`
-	- `ipkg install py26-setuptools`
-	- `ipkg install git`
+```
+ipkg install python26
+ipkg install py26-serial
+ipkg install py26-setuptools
+ipkg install git
+```
 
 2) Configure TomatoUSB
 ========
@@ -57,18 +59,24 @@ Get Our Software
 
 1. SSH to your router: `ssh root@192.168.1.1`
 2. a) Get our code from Github via https (easy):
-	cd /opt/usr/lib/
-	git init
-	git clone https://YOUR_USERNAME@github.com/c4fcm/Realtime-Community-Sign.git
+ ```
+cd /opt/usr/lib/
+git init
+git clone https://YOUR_USERNAME@github.com/c4fcm/Realtime-Community-Sign.git
+ ```
 2. b) Get our code from Github via keys (annoying):
-	dropbearkey -t rsa -f id_rsa
-	mv id_rsa /opt/usr/lib/id_rsa
+```
+dropbearkey -t rsa -f id_rsa
+mv id_rsa /opt/usr/lib/id_rsa
 mv /opt/usr/lib/Realtime-Community-Sign/scripts/sshlib /opt/bin
-	export GIT_SSH =/opt/bin/sshlib
+export GIT_SSH =/opt/bin/sshlib
+```
 (this export command has to be run every time you want to access the server, to commit or pull for example)
 3. Move some scripts to better places:
-	mv /opt/usr/lib/Realtime-Community-Sign/scripts/restart.sh /opt/bin
-	mv /opt/usr/lib/Realtime-Community-Sign/scripts/xmlrestart.sh /opt/bin
+```
+mv /opt/usr/lib/Realtime-Community-Sign/scripts/restart.sh /opt/bin
+mv /opt/usr/lib/Realtime-Community-Sign/scripts/xmlrestart.sh /opt/bin
+```
 
 Configure TomatoUSB to Run Our Software
 --------
