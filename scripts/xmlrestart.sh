@@ -1,7 +1,7 @@
 #!/bin/sh
 cd /opt/bin
-if [ -e /var/run/lib-sign-ctrl.pid ]
+if [ -e /var/run/lib-sign-ctrl-restart.pid ]
 then
-rm /var/run/lib-sign-ctrl.pid
+rm /var/run/lib-sign-ctrl-restart.pid
 restart.sh
 fi

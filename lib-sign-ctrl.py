@@ -4,9 +4,9 @@ import ConfigParser					# for parsing config params in ini file
 import serial					   	# for interacting with the sign
 import urllib						# for encoding url args
 import httplib						# for talking to our server
+import time							# for timing how often data is refreshed
 from threading import Thread
 from threading import Lock
-import time							# for timing how often data is refreshed
 import os
 import sys
 from datetime import datetime
@@ -21,26 +21,32 @@ CONFIG_FILE_PATH = "config.ini"
 # global instance
 config = None
 controller = None
-CODE_VERSION = "2.0.0"
-#Changed
-PROTOCOL_VERSION = "1.1"
+CODE_VERSION = "2.0.0"			# increment when you change this file
+PROTOCOL_VERSION = "1.1"		# increment if you change the XML file structure from the server
 
-PID_libsignctrl = '/var/run/lib-sign-ctrl.pid'
+'''
+HACK: this file actually is used to indicate that we want to restart the process, NOT that the 
+process is running.  The xmlrestart.sh script will check if this file exists and if it does
+it will kill this process and restart it.  This lets us restart remotely without a VPN connection
+to the installated sign.  Eventually we should get an OpenVPN server setup.
+'''
+NEED_TO_RESTART_FLAG_FILE = '/var/run/lib-sign-ctrl-restart.pid'
 
 class LedSign:
 	'''
 	This class can be used to display information on a MovingSign led sign (supporting the v2.1 
-	protocol).  This class should maintain state about the serial port working or not, and report
-	it via the public isWorking method.  If it isn't working, this class is the one to re-open it.
+	protocol) from SignsDirect.  This class should maintain state about the serial port working 
+	or not, and report it via the public isWorking method.  If it isn't working, this class is the 
+	one to re-open it.
 	'''
 
 	DEFAULT_PORT = "/dev/tty.usbserial"
 	BAUDRATE = 9600
 
-	_writeToSerial = True
-	_serial = None
-	_portname = None
-	_working = False
+	_writeToSerial = True	# set to false if testing without a serial port
+	_serial = None			# the serial port for this sign
+	_portname = None		# the /dev/ttyXXX name of this port
+	_working = False		# true if we can talk to the sign
 
 	# header constants for comms to the sign
 	COMM_TEXT_FILE_NAME_0 = ['0']
@@ -162,10 +168,16 @@ class LedSign:
 		return self.isWorking()
 	
 	def resetPort(self):
+		'''
+		Handy shortcut to close and reopen the port
+		'''
 		self._close()
 		self._open()
 	
 	def isWorking(self):
+		'''
+		Public method to return if the serial comms are working or not
+		'''
 		return self._working
 	
 	def _close(self):
@@ -179,11 +191,8 @@ class LedSign:
 	def write(self, text, displayMode=COMM_DISPLAY_MODE_AUTO, align=COMM_ALIGN_MODE_LEFT, 
 				displaySpeed=COMM_DISPLAY_SPEED_3, pauseTime=COMM_PAUSE_TIME_9):
 		'''
-		Write text to the sign - returns True if sign acknowledges it worked
+		Pulic method to write text to the sign - returns True if sign acknowledges it worked
 		'''
-		
-                #Text is currently ok, only contains message ([0])
-		#print text
 		
 		if self._serial == None:
 			return False
@@ -263,15 +272,17 @@ class SignManager(Thread):
 	to allows sign content updates to happen asyncronously from the content fetching.
 	'''
 
-	_contentLock = Lock()
-	_content = None
+	_contentLock = Lock()		# use when changing the content
+	_content = None				# the text to display on the sign
 	
-	_signLock = Lock()
-	_sign1 = None
+	_signLock = Lock()			# use when talking to the LED sign
+	_sign1 = None				# the LedSign object
 	_sign1Working = None
 	
 	def _hasSigns(self):
-		# override this!
+		'''
+		Helper to see if the signs have been instantiated
+		'''
 		hasSigns = False
 		with self._signLock:
 			if (self._sign1 != None):
@@ -279,6 +290,9 @@ class SignManager(Thread):
 		return hasSigns
 
 	def _hasContent(self):
+		'''
+		Helper to see if we have content set
+		'''
 		hasContent = False
 		with self._contentLock:
 			if self._content != None:
@@ -287,7 +301,7 @@ class SignManager(Thread):
 		
 	def run(self):
 		'''
-		loop showing the content
+		Loop showing the content
 		'''
 		while True:
 
@@ -308,41 +322,55 @@ class SignManager(Thread):
 		Send the content to the sign - override this for different sign configurations
 		'''
 		content = ""
-		#Content only has the message.
 		with self._contentLock:
 			content = self._content
 		
 		transition = LedSign.COMM_DISPLAY_MODE_ROLLLEFT
-		#Changed
+		# if the content is multi-line that means we're on a two-line sign, so 
+		# use a rollup transition
 		if content.find(LedSign.COMM_TEXT_LINE_BREAK) != -1:
 			transition = LedSign.COMM_DISPLAY_MODE_ROLLUP		
+		
 		with self._signLock:
 			self._sign1Working = self._sign1.write(content, transition)
+		
 		with self._contentLock:
 			self._content = None
 
 	def setLedSigns(self, signList):
-		# override this!
+		'''
+		Signs are actually created outside of this thread and passed in via this method
+		'''
 		with self._signLock:
 			self._sign1 = signList[0]
 		
 	def setContent(self, msgs):
-		# override this!
+		'''
+		Public method to set the content of the sign
+		'''
 		with self._contentLock:
-                        #Changed...?
 			self._content = msgs
 		
 	def clear(self):
+		'''
+		Public method to remove all the content from the sign
+		'''
 		with self._contentLock:
 			self._content = None	
 	
 	def isSignOk(self):
+		'''
+		Was the last sign comms successful?
+		'''
 		lastStatus = None
 		with self._signLock:
 			lastStatus = self._sign1Working
 		return lastStatus
 		
 	def loopingContent(self):
+		'''
+		Override this to say if we are still showing the content
+		'''
 		return False
 
 class TwoSignManager(SignManager):
@@ -352,9 +380,9 @@ class TwoSignManager(SignManager):
 	while scrolling the other horizontally.  So annoying.
 	'''
 
-	MIN_DURATION = 5
-	SECS_PER_CHAR = 0.17
-	MAX_CHARS_PER_LINE = 13
+	MIN_DURATION = 5			# if the computed display time is less than this, don't respect it
+	SECS_PER_CHAR = 0.17		# used to computer amount of time for a msg to scroll across
+	MAX_CHARS_PER_LINE = 13		# used to figure out if a msg is longer than one display
 	
 	_sign2 = None
 	_sign2Working = None
@@ -362,6 +390,9 @@ class TwoSignManager(SignManager):
 	_loopingContent = False
 
 	def _hasSigns(self):
+		'''
+		Overloaded helper to tell me if the signs have been assigned or not
+		'''
 		hasSigns = False
 		with self._signLock:
 			if (self._sign1 != None) and (self._sign2 != None):
@@ -369,6 +400,9 @@ class TwoSignManager(SignManager):
 		return hasSigns
 
 	def _updateSign(self):
+		'''
+		Overloaded helper to actually write content to signs
+		'''
 		
 		# grab the next msgs to show, or loop back to beginning
 		skip = False
@@ -383,25 +417,28 @@ class TwoSignManager(SignManager):
 				self._loopingContent = False
 				self._currContentIdx = 0
 				skip = True
-		#print " showing ",self._currContentIdx," total len ",len(self._content)
-		#print " line1 = ", line1
-		#print " line2 = ", line2
+
 		if skip:
 			return False
 		
 		# show the content
 		with self._signLock:
-			#self._sign1.write("    ")
-			#self._sign2.write("    ")
 			self._sign1Working = self._sign1.write(line1, LedSign.COMM_DISPLAY_MODE_HOLD)
 			line2Transition = LedSign.COMM_DISPLAY_MODE_ROLLLEFT
 			if len(line2) <= self.MAX_CHARS_PER_LINE:
 				line2Transition = LedSign.COMM_DISPLAY_MODE_HOLD
 			self._sign2Working = self._sign2.write(line2, line2Transition)
-		
+
+
 		# delay for a while
 		if len(line1)>0 and len(line2)>0:
-			sleepDuration = max(self.MIN_DURATION, (self.SECS_PER_CHAR * len(line2)) )
+			secsPerChar = self.SECS_PER_CHAR
+			if config.has_option('Communication', 'secs_per_char'):
+				secsPerChar = float(config.get('Communication', 'secs_per_char'))
+			minDisplaySecs = self.MIN_DURATION
+			if config.has_option('Communication', 'min_display_secs'):
+				minDisplaySecs = float(config.get('Communication', 'min_display_secs'))
+			sleepDuration = max(minDisplaySecs, (secsPerChar * len(line2)) )
 			time.sleep(sleepDuration)
 		else:
 			time.sleep(1)
@@ -411,23 +448,35 @@ class TwoSignManager(SignManager):
 		return True
 
 	def setContent(self, msgs):
+		'''
+		Overloaded public method to tell the signs what to show
+		'''
 		with self._contentLock:
 			signMsgs = msgs.strip().replace('\n', LedSign.COMM_TEXT_LINE_BREAK)
 			self._content = signMsgs.split(LedSign.COMM_TEXT_LINE_BREAK)
 			self._currContentIdx = 0
 
 	def setLedSigns(self, signList):
+		'''
+		Overloaded pulbic method to set the LedSigns this thread manages
+		'''
 		with self._signLock:
 			self._sign1 = signList[0]
 			self._sign2 = signList[1]
 		
 	def isSignOk(self):
+		'''
+		Overloaded public method to return if the serial comms are working
+		'''
 		lastStatus = None
 		with self._signLock:
 			lastStatus = (self._sign1Working) and (self._sign2Working)
 		return lastStatus
 		
 	def loopingContent(self):
+		'''
+		Overloaded public method to indicate if this is still looping the last content set
+		'''
 		isLooping = None
 		with self._contentLock:
 			isLooping = self._loopingContent
@@ -448,9 +497,9 @@ class SignController:
 	STATUS_SERVER_CONNECT_ERROR = 4	# can't connect to server
 	STATUS_BLANKED_DISPLAY = 5
 	STATUS_UNHEARD_FROM = 6
-	STATUS_VERSION_MISMATCH = 7 #version of protocol is not same as code
+	STATUS_VERSION_MISMATCH = 7		# version of protocol rx from server is not same as here in code
 
-	OFFLINE_THRESHOLD_SECS = 300
+	OFFLINE_THRESHOLD_SECS = 300	# after this long of not hearing from the server the sign switches to offline mode
 
 	config = None
 	_signMgr = None
@@ -459,8 +508,7 @@ class SignController:
 	_serial_port2 = None
 	_write_to_serial = True
 
-	ACTION_RESTART='restart'
-	PIDFILE = '/var/run/lib-sign-ctrl.pid'
+	ACTION_RESTART = 'restart'
 
 	REFRESH_INTERVAL = 30
 
@@ -571,39 +619,52 @@ class SignController:
 				self._status = self.STATUS_SERVER_CONNECT_ERROR
 				
 	def _do_actions(self, actions):
+		'''
+		Parse and act on any commands in the XML we received
+		'''
 		for i in range (0, len(actions)):
 			if actions[i] == self.ACTION_RESTART:
-				f = open(PID_libsignctrl,'w')
+				f = open(NEED_TO_RESTART_FLAG_FILE,'w')
 				f.close()
 
 	def _fetch_text_from_server(self):
 		'''
 		Hit the server with my info and get the latest info to show on the sign
 		'''
+
+		# try to get the content to display		
 		if self.config.has_option('Server', 'host'):
-			path = "/x"
-			params = dict(serial=self.config.get('Server', 'serial_num'), 
-						  secret=self.config.get('Server', 'secret'), 
-						  codeVersion=CODE_VERSION,
-						  protocolVersion=PROTOCOL_VERSION,
-						  status=self._status)
-			params = urllib.urlencode(params)
-			msg = None
-			try:
-				conn = httplib.HTTPConnection( self.config.get('Server', 'host'), self.config.get('Server', 'port'))
-				print self.config.get('Server', 'host')+":"+self.config.get('Server', 'port')+path+"?"+params
-				#sys.exit()
-				conn.request("GET", path+"?"+params)
-				response = conn.getresponse()
-				msg = response.read()
-			except Exception, e:
-				debug("Error: couldn't fetch from server "+str(e))
-				return None
+
+			if (os.path.isfile("/opt/usr/lib/Realtime-Community-Sign/content.xml")):
+				# load from a local file if it is there (helpful for testing or for running with static content
+				signMessage = open("/home/c4fcm/lostinboston/content.xml",'r')
+				debug("loaded from file!");
+				sys.exit()
+			else :
+				# load live content  from the server specified
+				path = "/x"
+				params = dict(serial=self.config.get('Server', 'serial_num'), 
+							  secret=self.config.get('Server', 'secret'), 
+							  codeVersion=CODE_VERSION,
+							  protocolVersion=PROTOCOL_VERSION,
+							  status=self._status)
+				params = urllib.urlencode(params)
+				msg = None
+				try:
+					conn = httplib.HTTPConnection( self.config.get('Server', 'host'), self.config.get('Server', 'port'))
+					#print self.config.get('Server', 'host')+":"+self.config.get('Server', 'port')+path+"?"+params
+					#sys.exit()
+					conn.request("GET", path+"?"+params)
+					response = conn.getresponse()
+					msg = response.read()
+				except Exception, e:
+					debug("Error: couldn't fetch from server "+str(e))
+					return None
+			
+			#XML parsing
 			if(len(msg)==0):
 				debug("Error: got empty message from server")
 				return None
-
-			#XML parsing
 			dom = xml.dom.minidom.parseString(msg)
 			information = []
 			info=""
@@ -632,15 +693,19 @@ class SignController:
 								
 				#Add info and actions
 				information = [info, actions]
+				
 				#Returning both
 				return information
-				#return msg.strip().replace('\n', LedSign.COMM_TEXT_LINE_BREAK)
+				
 			else:
 				self._status = self.STATUS_VERSION_MISMATCH
 				debug("Error: version mismatch")
+
 		else:
+
 			debug("Error: no server host configured!")
 			sys.exit(1);
+
 		return None
 
 def loadconfig(path):
@@ -681,6 +746,10 @@ def update(controller):
 		debug('Sleeping...')
 		time.sleep(controller.REFRESH_INTERVAL)
 
+'''
+Main Code.  This first load up the config and starts a SignController, then loops over
+calling updated
+'''
 if __name__ == '__main__':
 	config = loadconfig( CONFIG_FILE_PATH )
 	

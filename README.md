@@ -8,3 +8,13 @@ This is part of the Lost In Boston Realtime project of the [MIT Center for Civic
 All the content for the sign is managed by a centralized server, where you can pick transit or calendar information to display on the signs.
 
 Real the INSTALL.md for detailed setup instructions.
+
+Hardware
+--------
+
+Right now we run on:
+
+- Netgear WNR3500L Router (you can get these for $60)
+- scrolling LED signs from [SignsDirect](http://www.signsdirect.com/) (varying in price)
+
+If you wanted to talk to a different type of LED sign you need to write a new the LedSign python class.
