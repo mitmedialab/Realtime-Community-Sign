@@ -37,4 +37,4 @@ BOM (Bill of Materials)
     - [monoprice 10ft ](http://www.monoprice.com/products/product.asp?c_id=102&cp_id=10228&cs_id=1022802&p_id=5300&seq=1&format=2)
     - [monoprice 15ft](http://www.monoprice.com/products/product.asp?c_id=102&cp_id=10228&cs_id=1022802&p_id=5301&seq=1&format=2)
 
-*Stand for sign - we laser cut this, using a total of about $3 worth of acrylic
+* Stand for sign - we laser cut this, using a total of about $3 worth of acrylic
