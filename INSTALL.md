@@ -34,8 +34,7 @@ These instructions are taken from the TomatoUSB website (<http://tomatousb.org/t
 2. Go to USB and NAS > USB Support and enable all the USB options
 3. Format your USB key (at least 512MB) - we found this easiest to do on an Ubuntu PC, formatting it as ext2 and labeling the one partition _optware_
 4. Plug the usb drive into your router and you should see it show up on at the bottom of the USB Support page from step #2
-5. In the router's web interface go to Administration > Scripts > Init and add the following line so that Tomato mounts the drive automatically in the right place (/opt):
-    `echo "LABEL=optware /opt ext2 defaults 1 1" >> /etc/fstab`
+5. In the router's web interface go to Administration > Scripts > Init and add the following line so that Tomato mounts the drive automatically in the right place (/opt): `echo "LABEL=optware /opt ext2 defaults 1 1" >> /etc/fstab`
 6. Reboot your router
 7. Check the USB and NAS > USB Support webpage again and you should see a note that your USB devices is mounted to /opt
 8. SSH to your router: `ssh root@192.168.1.1`
@@ -47,7 +46,9 @@ chmod +x /tmp/optware-install.sh
 sh /tmp/optware-install.sh
 ```
 
-10. Run the following commands to install required libraries:
+Install Dependencies
+--------
+Run the following commands to install required libraries:
 
 ```
 ipkg install python26
@@ -62,16 +63,17 @@ ipkg install git
 Get Our Software
 --------
 
-1. SSH to your router: `ssh root@192.168.1.1`
-2. a) Get our code from Github via https (easy):
+SSH to your router: `ssh root@192.168.1.1`
 
- ```
+Get our code from Github via https (easy):
+
+```
 cd /opt/usr/lib/
 git init
 git clone https://YOUR_USERNAME@github.com/c4fcm/Realtime-Community-Sign.git
  ```
 
-2. b) Get our code from Github via keys (annoying):
+**OR** Get our code from Github via keys (annoying):
 
 ```
 dropbearkey -t rsa -f id_rsa
@@ -81,7 +83,8 @@ export GIT_SSH =/opt/bin/sshlib
 ```
 
 (this export command has to be run every time you want to access the server, to commit or pull for example)
-3. Move some scripts to better places:
+
+Move some scripts to better places:
 
 ```
 mv /opt/usr/lib/Realtime-Community-Sign/scripts/restart.sh /opt/bin
@@ -93,21 +96,37 @@ Configure TomatoUSB to Run Our Software
 
 **Set up some Schedules on the Administration > Scheduler**
 
-1. enable Reboot - set to 1:00 AM, Everyday
-2. enable Custom 1 - set to Every hour, Everyday
-	cd /opt/bin
-	./restart.sh
-3. enable Custom 2 - set to Every minute, Everyday
-	cd /opt/bin
-	./xmlrestart.sh
+Enable Reboot - set to 1:00 AM, Everyday
+
+Enable Custom 1 - set to Every hour, Everyday
+
+```
+cd /opt/bin
+./restart.sh
+```
+
+Enable Custom 2 - set to Every minute, Everyday
+
+```
+cd /opt/bin
+./xmlrestart.sh
+```
 
 **Set Up Our Scripts in Administration -> Scripts**
 
-1. under Init (for kernel modules to support usb-serial installation)
-	insmod usbserial
-	insmod ftdi_sio
-	insmod pl2303
-2. under Firewall
-	cd /opt/usr/lib/Realtime-Community-Sign/	python2.6 lib-sign-ctrl.py
+Under Init (for kernel modules to support usb-serial installation)
+
+```
+insmod usbserial
+insmod ftdi_sio
+insmod pl2303
+```
+
+Under Firewall
+
+```
+cd /opt/usr/lib/Realtime-Community-Sign/
+python2.6 lib-sign-ctrl.py
+```
 
 Reboot router after these changes have been done.
