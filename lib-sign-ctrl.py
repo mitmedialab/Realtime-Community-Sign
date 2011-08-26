@@ -14,6 +14,7 @@ from xml.etree import ElementTree as ET
 import xml.dom.minidom
 from xml.dom.minidom import Node
 from xml.dom.minidom import parse, parseString
+import logging
 
 # what config file should we initialize from
 CONFIG_FILE_PATH = "config.ini"
@@ -31,6 +32,10 @@ it will kill this process and restart it.  This lets us restart remotely without
 to the installated sign.  Eventually we should get an OpenVPN server setup.
 '''
 NEED_TO_RESTART_FLAG_FILE = '/var/run/lib-sign-ctrl-restart.pid'
+
+LOG_FILE = '/var/log/lib-sign-ctrl.log'
+
+logfile = None
 
 class LedSign:
 	'''
@@ -242,23 +247,23 @@ class LedSign:
 			#time.sleep(1)
 			result = self._serial.read()
 			if len(result)==0 or ord(result) != 4 :			
-				debug( "Didn't get EOT (0x04) in response!")
+				logging.warning( "Didn't get EOT (0x04) in response!")
 				if len(result) > 0:
-					debug("  got ", str(ord(result)))
+					logging.warning("  got ", str(ord(result)))
 				self._working = False
 			else:
 			#	time.sleep(1)
 				result = self._serial.read()
 				if len(result)==0 or ord(result) != 1:
-					debug("Didn't get SOH (0x01) in response!")
+					logging.warning("Didn't get SOH (0x01) in response!")
 					if len(result) > 0:
-						debug("  got ", str(ord(result)))
+						logging.warning("  got ", str(ord(result)))
 					self._working = False
 				else:
 					self._working = True
 
 		except Exception as e:
-			debug(str(e))
+			logging.warning(str(e))
 			self._working = False
 
 		#time.sleep(1)
@@ -546,22 +551,22 @@ class SignController:
 		sign1 = LedSign(self._serial_port1, self._write_to_serial)
 		serial1Opened = sign1.isWorking()
 		if serial1Opened:
-			debug("Opened serial port1 at ",path)
+			logging.info("Opened serial port1 at ",path)
 		else:
-			debug("ERROR: couldn't open serial port1 named "+str(self._serial_port1))
+			logging.error("ERROR: couldn't open serial port1 named "+str(self._serial_port1))
 			self._status = self.STATUS_SIGN_COMMS_ERROR
 		signs.append(sign1)
 
 		if self.config.has_option('Communication', 'serial_path_2'):
-			debug("Has 2 serial ports")
+			logging.info("Has 2 serial ports")
 			path = self.config.get('Communication', 'serial_path_2')
 			self._serial_port2 = path
 			sign2 = LedSign(self._serial_port2, self._write_to_serial)
 			serial2Opened = sign2.isWorking()
 			if serial2Opened:
-				debug("Opened serial port2 at ",path)
+				logging.info("Opened serial port2 at ",path)
 			else:
-				debug("ERROR: couldn't open serial port2 named "+str(self._serial_port2))
+				logging.error("ERROR: couldn't open serial port2 named "+str(self._serial_port2))
 				self._status = self.STATUS_SIGN_COMMS_ERROR
 			signs.append(sign2)
 		
@@ -575,7 +580,7 @@ class SignController:
 		#async update of sign in separate thread, so we can't check status till afterwards
 		lastUpdateWorked = self._signMgr.isSignOk()
 		if lastUpdateWorked == False:
-			debug("Last update couldn't write to sign.")
+			logging.warning("Last update couldn't write to sign.")
 			self._status = self.STATUS_SIGN_COMMS_ERROR
 		# try to update the sign content (which should reset the ports if they aren't working)
 		self._signMgr.setContent(message)
@@ -587,14 +592,10 @@ class SignController:
 		'''
 		now = time.time()
 
-		# re-open serial if we need to (redundant - the signMgr should do this too)
-		#if (self._status==self.STATUS_SIGN_COMMS_ERROR):
-			#self._openSigns()
-
 		# check if we're offline so we don't show stale info
 		if (self._status==self.STATUS_SERVER_CONNECT_ERROR) and ((now - self._last_success) > self.OFFLINE_THRESHOLD_SECS):
 			self._write_to_display("")
-			debug("ERROR: haven't gotten text from server for a while, disabling display")
+			logging.warning("haven't gotten text from server for a while, disabling display")
 			self._status = self.STATUS_BLANKED_DISPLAY
 
 		# now fetch normally
@@ -607,10 +608,10 @@ class SignController:
 				
 		if msg != None:
 			if(self._status==self.STATUS_SERVER_CONNECT_ERROR or self._status==self.STATUS_BLANKED_DISPLAY):
-				debug("Connected to server again happily")
+				logging.info("Connected to server again happily")
 			self._status = self.STATUS_OK
-			debug('update: '+str(msg))
-			debug('...writing updated message.')
+			logging.info('update: '+str(msg))
+			logging.info('...writing updated message.')
 			self._write_to_display(msg)
 			self._last_success = now
 		else:
@@ -657,12 +658,12 @@ class SignController:
 					response = conn.getresponse()
 					msg = response.read()
 				except Exception, e:
-					debug("Error: couldn't fetch from server "+str(e))
+					logging.warning("couldn't fetch from server "+str(e))
 					return None
 			
 			#XML parsing
 			if(len(msg)==0):
-				debug("Error: got empty message from server")
+				logging.warning("got empty message from server")
 				return None
 			dom = xml.dom.minidom.parseString(msg)
 			information = []
@@ -698,11 +699,11 @@ class SignController:
 				
 			else:
 				self._status = self.STATUS_VERSION_MISMATCH
-				debug("Error: version mismatch")
+				logging.error("Error: version mismatch")
 
 		else:
 
-			debug("Error: no server host configured!")
+			logging.error("Error: no server host configured!")
 			sys.exit(1);
 
 		return None
@@ -715,24 +716,11 @@ def loadconfig(path):
 	try:
 		config.read(path)
 	except Exception, e:
-		debug("Couldn't read config: %s" % e)
+		logging.error("Couldn't read config: %s" % e)
 		pass
 	else:
 		pass
 	return config
-
-def debug(msg, lvl=10):
-	'''
-	Helper method to log this to stderr
-	'''
-	#print(msg)
-	#return
-	debugLevel = 0
-	if config.has_option('Debug', 'verbosity'):
-		debugLevel = int( config.get('Debug', 'verbosity') )
-	if(debugLevel >= lvl):
-		sys.stderr.write("%s:\t%s\n" % (datetime.now().isoformat(' '),msg))
-
 
 def update(controller):
 	'''
@@ -744,7 +732,7 @@ def update(controller):
 		while controller.stillCyclingContent():
 			time.sleep(1)
 	else:
-		debug('Sleeping...')
+		logging.info('Sleeping...')
 		time.sleep(controller.REFRESH_INTERVAL)
 
 '''
@@ -752,6 +740,11 @@ Main Code.  This first load up the config and starts a SignController, then loop
 calling updated
 '''
 if __name__ == '__main__':
+	
+	logging.basicConfig(filename=LOG_FILE,level=logging.DEBUG)
+	
+	logfile = open(LOG_FILE,'w')
+	
 	config = loadconfig( CONFIG_FILE_PATH )
 	
 	controller = SignController(config)

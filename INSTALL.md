@@ -5,7 +5,7 @@ Running an LED Sign on a Netgear WNR3500L Router
 =======
 We use a Netgear WNR3500L Router.  Unfortunately to install TomatoUSB on this router, we first need to install DD-WRT.  These instructions are taken from the DD-WRT website (<http://www.dd-wrt.com/wiki/index.php/Netgear_WNR3500L>).  They are included here for completeness.
 
-**Versions**: For DD-WRT this router uses the NEWD-2, K2.6 build. _Do not use another version_ as this may brick the router.  For TomatoUSB this router uses K2.6 build for MIPSR2 (choose EXT or VPN).  Download both firmware builds to your PC first!
+**Versions**: For DD-WRT this router uses the NEWD-2, K2.6 build. _Do not use another version_ as this may brick the router.  For TomatoUSB this router uses K2.6 build for MIPSR2 - we use "Tomato v1.28.9054 MIPSR2-beta K26 USB vpn3.6".  Download both firmware builds to your PC first!
 
 1. Use a static IP (ex 192.168.1.8) on the PC and connect the PC to the router using ethernet cable. You should not be flashing the router using a wireless network.
 2. Do a hard reset (30/30/30) to clear the nvram - with the router on, hold the reset button for 30 seconds, unplug the power cord while still holding the reset button and hold it for 30 seconds, and plug the power cord back in while holding the reset button and hold it for 30 seconds. 
@@ -157,4 +157,4 @@ Our software is designed to source community transit and calendar information fr
 4) Run Our Software
 ========
 
-Reboot the router and our software should run automatically!
+Reboot the router and our software should run automatically!  Keep an eye on `/var/log/lib-sign-ctrl.log` to see what is happening.
