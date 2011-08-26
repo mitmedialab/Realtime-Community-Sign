@@ -608,7 +608,6 @@ class SignController:
 		if msg != None:
 			if(self._status==self.STATUS_SERVER_CONNECT_ERROR or self._status==self.STATUS_BLANKED_DISPLAY):
 				debug("Connected to server again happily")
-			print self._status
 			self._status = self.STATUS_OK
 			debug('update: '+str(msg))
 			debug('...writing updated message.')
@@ -635,11 +634,11 @@ class SignController:
 		# try to get the content to display		
 		if self.config.has_option('Server', 'host'):
 
-			if (os.path.isfile("/opt/usr/lib/Realtime-Community-Sign/content.xml")):
+			#if (os.path.isfile("/opt/usr/lib/Realtime-Community-Sign/content.xml")):
+			if (os.path.isfile("content.xml")):
 				# load from a local file if it is there (helpful for testing or for running with static content
-				signMessage = open("/home/c4fcm/lostinboston/content.xml",'r')
-				debug("loaded from file!");
-				sys.exit()
+				signMessage = open("content.xml",'r')
+				msg = signMessage.read()
 			else :
 				# load live content  from the server specified
 				path = "/x"
@@ -726,6 +725,8 @@ def debug(msg, lvl=10):
 	'''
 	Helper method to log this to stderr
 	'''
+	#print(msg)
+	#return
 	debugLevel = 0
 	if config.has_option('Debug', 'verbosity'):
 		debugLevel = int( config.get('Debug', 'verbosity') )

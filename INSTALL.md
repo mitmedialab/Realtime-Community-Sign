@@ -130,3 +130,31 @@ python2.6 lib-sign-ctrl.py
 ```
 
 Reboot router after these changes have been done.
+
+3) Configure Our Software
+========
+
+Once everything is installed you need to configure out software.  First make your own config file by copying `config.ini.template` to to `config.ini`.  
+
+Serial Port Configuration
+------
+
+We talk to the LED Signs via USB-Serial adaptors (cheap Prolific brand).  Edit your `config.ini` file to be something like this:
+
+```
+[Communication]
+serial_path=/dev/ttyUSB0
+serial_path_2=/dev/ttyUSB1
+serial_baudrate=9600
+write_to_serial=1
+```
+
+Server Communications
+--------
+
+Our software is designed to source community transit and calendar information from a central server.  However, out of the box we have included a `content.xml` file that is used instead of live data from a server.  To talk to a server set the variables in the `Server` section of `config.ini` and delete the `content.xml` file.
+
+4) Run Our Software
+========
+
+Reboot the router and our software should run automatically!
