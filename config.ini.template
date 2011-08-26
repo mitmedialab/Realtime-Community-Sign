@@ -1,0 +1,15 @@
+
+[Communication]
+serial_path=/dev/ttyUSB0
+serial_baudrate=9600
+write_to_serial=1
+
+[Server]
+host=lib-devices.brownbag.me
+port=80
+serial_num=default
+secret=default
+
+[Debug]
+verbosity=10
+no_daemon=1
