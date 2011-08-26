@@ -1,5 +1,6 @@
 Running an LED Sign on a Netgear WNR3500L Router
 =======
+
 1) Install TomatoUSB (via DD-WRT)
 =======
 We use a Netgear WNR3500L Router.  Unfortunately to install TomatoUSB on this router, we first need to install DD-WRT.  These instructions are taken from the DD-WRT website (<http://www.dd-wrt.com/wiki/index.php/Netgear_WNR3500L>).  They are included here for completeness.
@@ -20,7 +21,7 @@ We use a Netgear WNR3500L Router.  Unfortunately to install TomatoUSB on this ro
 - For DD-WRT, the default is root/admin
 - For TomatoUSB, the default is admin/admin or root/root
 
-2) Configure TomatoUSB for our Software 
+2) Install Optware
 ========
 
 The following steps require that yor router be connected to the internet and to your PC.  We tend to turn off wireless on our PC, connect it to the router over a wire, and set up the router as a wireless client on our existing wireless network (via the Basic > Network > Wireless options in the router web interface).  That allows our PC to access the router and both the router and PC to access the internet to download software we need.
@@ -46,58 +47,49 @@ These instructions are taken from the TomatoUSB website (<http://tomatousb.org/t
 	- `ipkg install python26`
 	- `ipkg install py26-serial`
 	- `ipkg install py26-setuptools`
-	- `ipkg install svn`
-11. Run the following commands to enable some required kernel modules:
-	- `insmod usbserial`
-	- `insmod ftdi_sio`
-	- `insmod pl2303`
+	- `ipkg install git`
+
+2) Configure TomatoUSB
+========
 
 Get Our Software
 --------
 
 1. SSH to your router: `ssh root@192.168.1.1`
-3. Move sshlib from Scripts:
-	- `cd /opt/usr/lib/lib-display-code/router-led`
-	- `mv sshlib /opt/bin`
-	- `export GIT_SSH =/opt/bin/sshlib` (this command has to be run every time you want to access the server, to commit or pull for example)
+2. a) Get our code from Github via https (easy):
+	cd /opt/usr/lib/
+	git init
+	git clone https://YOUR_USERNAME@github.com/c4fcm/Realtime-Community-Sign.git
+2. b) Get our code from Github via keys (annoying):
+	dropbearkey -t rsa -f id_rsa
+	mv id_rsa /opt/usr/lib/id_rsa
+mv /opt/usr/lib/Realtime-Community-Sign/scripts/sshlib /opt/bin
+	export GIT_SSH =/opt/bin/sshlib
+(this export command has to be run every time you want to access the server, to commit or pull for example)
+3. Move some scripts to better places:
+	mv /opt/usr/lib/Realtime-Community-Sign/scripts/restart.sh /opt/bin
+	mv /opt/usr/lib/Realtime-Community-Sign/scripts/xmlrestart.sh /opt/bin
 
-2. Check out our code from GitHub
-
-Get keys to access lostinboston server
-	- `dropbearkey -t rsa -f id_rsa` (?)
-4. 
-5. Install lostinboston materials
-	- `cd /opt/usr/lib`
-	- `git clone ssh://git@codebasehq.com/c4fcm/lost-in-boston-realtime/lib-display-code.git`
-6. Move restart.sh, xmlrestart.sh scripts from Scripts folder in router-led to /opt/bin 
-	- `cd /opt/usr/lib/lib-display-code/router-led`
-	- `mv restart.sh /opt/bin`
-    - `mv xmlrestart.sh /opt/bin`
-
-Configure TomatoUSB
+Configure TomatoUSB to Run Our Software
 --------
 
 **Set up some Schedules on the Administration > Scheduler**
 
-1. enable Reboot
-	- set to 1:00 AM, Everyday
-2. enable Custom 1
-	- set to Every hour, Everyday 
-	- `cd /opt/bin`
-    - `./restart.sh`
-3. enable Custom 2
-	- set to Every minute, Everyday 
-	- `cd /opt/bin`
-    - `./xmlrestart.sh`
+1. enable Reboot - set to 1:00 AM, Everyday
+2. enable Custom 1 - set to Every hour, Everyday
+	cd /opt/bin
+	./restart.sh
+3. enable Custom 2 - set to Every minute, Everyday
+	cd /opt/bin
+	./xmlrestart.sh
 
 **Set Up Our Scripts in Administration -> Scripts**
 
 1. under Init (for kernel modules to support usb-serial installation)
-	- `insmod usbserial`
-	- `insmod ftdi_sio`
-	- `insmod pl2303`
+	insmod usbserial
+	insmod ftdi_sio
+	insmod pl2303
 2. under Firewall
-	- `cd /opt/usr/lib/lib-display-code/router-led`
-	- `python2.6 lib-sign-ctrl.py`
+	cd /opt/usr/lib/Realtime-Community-Sign/	python2.6 lib-sign-ctrl.py
 
 Reboot router after these changes have been done.
