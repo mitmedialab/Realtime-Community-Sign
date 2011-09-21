@@ -97,7 +97,11 @@ class LedSign:
 	COMM_DISPLAY_MODE_CLOCK = ['Z']
 
 	# metadata about how to show the text
-	COMM_DISPLAY_SPEED_3 = ['3']
+	COMM_DISPLAY_SPEED_1 = ['1']	# fastest
+	COMM_DISPLAY_SPEED_2 = ['2']
+ 	COMM_DISPLAY_SPEED_3 = ['3']
+	COMM_DISPLAY_SPEED_4 = ['4']
+	COMM_DISPLAY_SPEED_5 = ['5']	#slowest
 	COMM_PAUSE_TIME_2 = ['2']
 	COMM_PAUSE_TIME_5 = ['5']
 	COMM_PAUSE_TIME_9 = ['9']
@@ -193,8 +197,7 @@ class LedSign:
 			self._working = False
 			self._serial.close()
 	
-	def write(self, text, displayMode=COMM_DISPLAY_MODE_AUTO, align=COMM_ALIGN_MODE_LEFT, 
-				displaySpeed=COMM_DISPLAY_SPEED_3, pauseTime=COMM_PAUSE_TIME_9):
+	def write(self, text, displayMode=COMM_DISPLAY_MODE_AUTO):
 		'''
 		Pulic method to write text to the sign - returns True if sign acknowledges it worked
 		'''
@@ -208,6 +211,14 @@ class LedSign:
 		# try to re-open it if it wasn't working
 		if not self.isWorking():
 			self.resetPort()
+
+		align=self.COMM_ALIGN_MODE_LEFT
+		displaySpeed=self.COMM_DISPLAY_SPEED_2
+		if config.has_option('Communication', 'display_speed'):
+			displaySpeed = [config.get('Communication', 'display_speed')]
+		pauseTime=self.COMM_PAUSE_TIME_9
+		if config.has_option('Communication', 'pause_time'):
+			pauseTime = [config.get('Communication', 'pause_time')]
 
 		newText = text.encode('ascii','ignore')
 		#assemble the message		
@@ -643,6 +654,8 @@ class SignController:
 			else :
 				# load live content  from the server specified
 				path = "/x"
+				if config.has_option('Server', 'path'):
+					path = config.get('Server', 'path')
 				params = dict(serial=self.config.get('Server', 'serial_num'), 
 							  secret=self.config.get('Server', 'secret'), 
 							  codeVersion=CODE_VERSION,
