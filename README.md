@@ -8,7 +8,7 @@ This is part of the Lost In Boston Realtime project of the [MIT Center for Civic
 Read the INSTALL.md for detailed setup instructions.
 
 BOM (Bill of Materials)
---------
+-----------------------
 
 **Total cost $300**
 
@@ -36,3 +36,14 @@ BOM (Bill of Materials)
     - [monoprice 15ft](http://www.monoprice.com/products/product.asp?c_id=102&cp_id=10228&cs_id=1022802&p_id=5301&seq=1&format=2)
 
 * Stand for sign - we laser cut this, using a total of about $3 worth of acrylic
+
+Server API
+----------
+
+If you just download and start the code, the sign will display content from the `content.xml` file included.  However, it is intended to fetch content from a server, so it can display realtime information.  When it queries the server it passes along the following arguments on the end of the url (set in your `content.ini`):
+
+- *serial*: the serial number set in your `content.ini`
+- *secret*: the secret key set in your `content.ini`
+- *codeVersion*: the version number of the code
+- *protocolVersion*: the verson number of the xml protocol it expects to receive
+- *status*: the current status of the sign (one of the `SignController::STATUS_*` constants)
