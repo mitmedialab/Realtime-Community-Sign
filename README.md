@@ -47,3 +47,5 @@ If you just download and start the code, the sign will display content from the 
 - *codeVersion*: the version number of the code
 - *protocolVersion*: the verson number of the xml protocol it expects to receive
 - *status*: the current status of the sign (one of the `SignController::STATUS_*` constants)
+
+The server's resonse is identical in format to what is shown in the `content.xml` file.  The `<info>` tag holds the content for display on the sign.  For two-line signs, you should separate each line with a EOL.  The only `<command>` recognized for now is `restart`.
