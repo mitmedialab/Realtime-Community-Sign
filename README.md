@@ -7,8 +7,34 @@ This is part of the Lost In Boston Realtime project of the [MIT Center for Civic
 
 Read the INSTALL.md for detailed setup instructions.
 
+Quick Start
+-----------
+
+First make your own config file by copying `config.ini.template` to to `config.ini`.
+
+### Serial Port Configuration
+
+We talk to the LED Signs via USB-Serial adaptors (cheap Prolific brand).  Edit your `config.ini` file to be something like this:
+
+```
+[Communication]
+serial_path=/dev/ttyUSB0
+serial_path_2=/dev/ttyUSB1
+serial_baudrate=9600
+write_to_serial=1
+```
+
+### Server Communications
+
+If you just download and start the code, the sign will display content from the `content.xml` file included.  However, it is intended to fetch content from a server, so it can display realtime information.  If you want to have the sign realtime content from a server, you'll need to install our [Community Sign Server software](https://github.com/c4fcm/Community-Sign-Server) on a server.  Then 
+
+Our software is designed to source community transit and calendar information from a central server.  However, out of the box we have included a `content.xml` file that is used instead of live data from a server.  To talk to a server set the variables in the `Server` section of `config.ini` and delete the `content.xml` file.
+
+
 BOM (Bill of Materials)
 -----------------------
+
+For our pilot test, here is the set of hardware we used.
 
 **Total cost $300**
 
@@ -40,12 +66,12 @@ BOM (Bill of Materials)
 Server API
 ----------
 
-If you just download and start the code, the sign will display content from the `content.xml` file included.  However, it is intended to fetch content from a server, so it can display realtime information.  When it queries the server it passes along the following arguments on the end of the url (set in your `content.ini`):
+When the software queries the server it passes along the following arguments on the end of the url:
 
-- *serial*: the serial number set in your `content.ini`
-- *secret*: the secret key set in your `content.ini`
+- *serial*: the serial number set in your `config.ini`
+- *secret*: the secret key set in your `config.ini`
 - *codeVersion*: the version number of the code
 - *protocolVersion*: the verson number of the xml protocol it expects to receive
 - *status*: the current status of the sign (one of the `SignController::STATUS_*` constants)
 
-The server's resonse is identical in format to what is shown in the `content.xml` file.  The `<info>` tag holds the content for display on the sign.  For two-line signs, you should separate each line with a EOL.  The only `<command>` recognized for now is `restart`.
+The server's resonse is identical in format to what is shown in the `content.xml` file.  The `<info>` tag holds the content for display on the sign.  For two-line signs, you should separate each line with a EOL.  The only `<command>` recognized for now is `restart`.  This command will restart the client software.
